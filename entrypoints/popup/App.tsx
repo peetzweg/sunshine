@@ -2,13 +2,48 @@ import { useEffect, useState } from "react";
 import {
   SHADOWS,
   DEFAULT_SETTINGS,
+  DEFAULT_GLOBAL_SETTINGS,
+  DEFAULT_DOMAIN_SETTINGS,
+  GLOBAL_STORAGE_KEY,
   storageKey,
+  domainStorageKey,
   type SiteSettings,
+  type GlobalSettings,
+  type DomainSettings,
 } from "../../lib/constants";
+
+function Toggle({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={onChange}
+      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 ${
+        checked ? "bg-amber-400" : "bg-gray-200"
+      }`}
+    >
+      <span
+        className={`inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${
+          checked ? "translate-x-6" : "translate-x-1"
+        }`}
+      />
+    </button>
+  );
+}
 
 export default function App() {
   const [hostname, setHostname] = useState<string>("");
+  const [domain, setDomain] = useState<string>("");
   const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SETTINGS);
+  const [globalActive, setGlobalActive] = useState(false);
+  const [domainActive, setDomainActive] = useState(false);
   const [loading, setLoading] = useState(true);
   const [unavailable, setUnavailable] = useState(false);
 
@@ -32,8 +67,15 @@ export default function App() {
 
         if (response?.hostname) {
           setHostname(response.hostname);
+          setDomain(response.domain ?? response.hostname);
           if (response.settings) {
             setSettings(response.settings);
+          }
+          if (response.globalSettings) {
+            setGlobalActive(response.globalSettings.active);
+          }
+          if (response.domainSettings) {
+            setDomainActive(response.domainSettings.active);
           }
         } else {
           setUnavailable(true);
@@ -46,6 +88,19 @@ export default function App() {
     }
     init();
   }, []);
+
+  async function updateGlobal(active: boolean) {
+    setGlobalActive(active);
+    const value: GlobalSettings = { active };
+    await browser.storage.local.set({ [GLOBAL_STORAGE_KEY]: value });
+  }
+
+  async function updateDomain(active: boolean) {
+    if (!domain) return;
+    setDomainActive(active);
+    const value: DomainSettings = { active };
+    await browser.storage.local.set({ [domainStorageKey(domain)]: value });
+  }
 
   async function updateSettings(partial: Partial<SiteSettings>) {
     const newSettings = { ...settings, ...partial };
@@ -75,6 +130,8 @@ export default function App() {
     );
   }
 
+  const overlayActive = globalActive || domainActive;
+
   return (
     <div className="w-80 bg-gradient-to-b from-amber-50 to-white">
       {/* Header */}
@@ -91,28 +148,28 @@ export default function App() {
       </div>
 
       <div className="px-5 pb-5 space-y-4">
-        {/* Toggle */}
+        {/* Global toggle */}
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-600">Shadow overlay</span>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={settings.active}
-            onClick={() => updateSettings({ active: !settings.active })}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 ${
-              settings.active ? "bg-amber-400" : "bg-gray-200"
-            }`}
-          >
-            <span
-              className={`inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${
-                settings.active ? "translate-x-6" : "translate-x-1"
-              }`}
-            />
-          </button>
+          <span className="text-sm text-gray-600">Enabled everywhere</span>
+          <Toggle
+            checked={globalActive}
+            onChange={() => updateGlobal(!globalActive)}
+          />
         </div>
 
-        {/* Controls (shown when active) */}
-        {settings.active && (
+        {/* Domain toggle */}
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-gray-600">
+            Enabled on {domain}
+          </span>
+          <Toggle
+            checked={domainActive}
+            onChange={() => updateDomain(!domainActive)}
+          />
+        </div>
+
+        {/* Controls (shown when overlay is active) */}
+        {overlayActive && (
           <div className="space-y-3 animate-in fade-in duration-200">
             {/* Shadow selector */}
             <div>
