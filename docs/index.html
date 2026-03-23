@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sunshine — Beautiful shadow overlays for any website</title>
+  <meta name="description" content="A browser extension that overlays beautiful shadow effects on any website. Choose from handcrafted presets, adjust opacity, and save preferences per site.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#9728;&#65039;</text></svg>">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #1a1a1a;
+      background: #fffbf5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    /* Nav */
+    nav {
+      padding: 1.25rem 0;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+    nav .container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-decoration: none;
+      color: #1a1a1a;
+    }
+    .nav-logo {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #fcd34d, #ea580c);
+    }
+    .nav-name {
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    nav a {
+      color: #666;
+      text-decoration: none;
+      font-size: 0.85rem;
+    }
+    nav a:hover { color: #1a1a1a; }
+    .nav-links { display: flex; gap: 1.25rem; }
+
+    /* Hero */
+    .hero {
+      padding: 5rem 0 4rem;
+      text-align: center;
+    }
+    .hero-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #fcd34d, #ea580c);
+      margin: 0 auto 1.5rem;
+      box-shadow: 0 4px 24px rgba(251, 146, 60, 0.3);
+    }
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+      margin-bottom: 0.75rem;
+    }
+    .hero p {
+      color: #555;
+      font-size: 1.05rem;
+      line-height: 1.6;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* Install buttons */
+    .install-buttons {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+      margin-top: 2rem;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.625rem 1.25rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+    .btn-primary {
+      background: #1a1a1a;
+      color: #fff;
+    }
+    .btn-primary:hover { background: #333; }
+    .btn-secondary {
+      background: #fff;
+      color: #1a1a1a;
+      border: 1px solid #ddd;
+    }
+    .btn-secondary:hover { border-color: #aaa; }
+    .btn svg { width: 18px; height: 18px; }
+
+    /* Features */
+    .features {
+      padding: 3rem 0;
+    }
+    .features-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    .feature {
+      padding: 1.25rem;
+      border-radius: 10px;
+      background: #fff;
+      border: 1px solid rgba(0,0,0,0.06);
+    }
+    .feature-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+    .feature-desc {
+      font-size: 0.8rem;
+      color: #666;
+      line-height: 1.5;
+    }
+
+    /* Footer */
+    footer {
+      padding: 2rem 0;
+      border-top: 1px solid rgba(0,0,0,0.06);
+      text-align: center;
+    }
+    footer p {
+      font-size: 0.8rem;
+      color: #999;
+    }
+    footer a {
+      color: #888;
+      text-decoration: none;
+    }
+    footer a:hover { color: #555; }
+    .footer-links {
+      display: flex;
+      gap: 1.25rem;
+      justify-content: center;
+      margin-bottom: 0.75rem;
+    }
+
+    @media (max-width: 480px) {
+      .features-grid { grid-template-columns: 1fr; }
+      h1 { font-size: 1.6rem; }
+      .hero { padding: 3rem 0 2.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="container">
+      <a href="./" class="nav-brand">
+        <div class="nav-logo"></div>
+        <span class="nav-name">Sunshine</span>
+      </a>
+      <div class="nav-links">
+        <a href="https://github.com/ppoloczek/sunshine">GitHub</a>
+        <a href="./privacy">Privacy</a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <section class="hero">
+      <div class="container">
+        <div class="hero-icon"></div>
+        <h1>Beautiful shadow overlays<br>for any website</h1>
+        <p>Add natural shadow effects to any page you visit. Dappled sunlight, gentle window shadows, soft ambient light — pick a style and adjust to taste.</p>
+
+        <div class="install-buttons">
+          <a href="#" class="btn btn-primary">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+            Chrome Web Store
+          </a>
+          <a href="#" class="btn btn-secondary">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8 0-1.85.63-3.55 1.69-4.9L16.9 18.31C15.55 19.37 13.85 20 12 20zm6.31-3.1L7.1 5.69C8.45 4.63 10.15 4 12 4c4.41 0 8 3.59 8 8 0 1.85-.63 3.55-1.69 4.9z"/></svg>
+            Firefox Add-ons
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="features">
+      <div class="container">
+        <div class="features-grid">
+          <div class="feature">
+            <div class="feature-title">4 shadow presets</div>
+            <div class="feature-desc">Whisper, Gentle, Dappled, and Deep — handcrafted overlays for different moods.</div>
+          </div>
+          <div class="feature">
+            <div class="feature-title">Adjustable opacity</div>
+            <div class="feature-desc">Fine-tune intensity from 5% to 80% with a simple slider.</div>
+          </div>
+          <div class="feature">
+            <div class="feature-title">Per-site settings</div>
+            <div class="feature-desc">Your preferred shadow and opacity are remembered for each website.</div>
+          </div>
+          <div class="feature">
+            <div class="feature-title">Zero flicker</div>
+            <div class="feature-desc">Overlay appears before the page paints. No flash, no layout shift.</div>
+          </div>
+          <div class="feature">
+            <div class="feature-title">Global or per-domain</div>
+            <div class="feature-desc">Enable everywhere at once, or toggle on a domain-by-domain basis.</div>
+          </div>
+          <div class="feature">
+            <div class="feature-title">Fully private</div>
+            <div class="feature-desc">No data leaves your device. No analytics, no tracking, no network requests.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="footer-links">
+        <a href="https://github.com/ppoloczek/sunshine">GitHub</a>
+        <a href="./privacy">Privacy Policy</a>
+      </div>
+      <p>Sunshine is open source.</p>
+    </div>
+  </footer>
+</body>
+</html>

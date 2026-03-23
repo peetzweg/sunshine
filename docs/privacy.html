@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy — Sunshine</title>
+  <meta name="description" content="Sunshine browser extension privacy policy. No data collection, no tracking, fully offline.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#9728;&#65039;</text></svg>">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #1a1a1a;
+      background: #fffbf5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    /* Nav */
+    nav {
+      padding: 1.25rem 0;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+    nav .container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-decoration: none;
+      color: #1a1a1a;
+    }
+    .nav-logo {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #fcd34d, #ea580c);
+    }
+    .nav-name {
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    nav a {
+      color: #666;
+      text-decoration: none;
+      font-size: 0.85rem;
+    }
+    nav a:hover { color: #1a1a1a; }
+    .nav-links { display: flex; gap: 1.25rem; }
+
+    /* Content */
+    .content {
+      padding: 3rem 0 4rem;
+    }
+    .content h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.25rem;
+    }
+    .updated {
+      color: #999;
+      font-size: 0.8rem;
+      margin-bottom: 2rem;
+    }
+    .content h2 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-top: 2rem;
+      margin-bottom: 0.5rem;
+    }
+    .content p {
+      font-size: 0.9rem;
+      line-height: 1.7;
+      color: #444;
+      margin-bottom: 0.5rem;
+    }
+    .content ul {
+      padding-left: 1.25rem;
+      margin: 0.5rem 0;
+    }
+    .content li {
+      font-size: 0.9rem;
+      line-height: 1.7;
+      color: #444;
+      margin-bottom: 0.25rem;
+    }
+    .content code {
+      font-size: 0.85em;
+      background: rgba(0,0,0,0.04);
+      padding: 0.15em 0.35em;
+      border-radius: 4px;
+    }
+    .content a {
+      color: #c2410c;
+      text-decoration: none;
+    }
+    .content a:hover { text-decoration: underline; }
+
+    /* Footer */
+    footer {
+      padding: 2rem 0;
+      border-top: 1px solid rgba(0,0,0,0.06);
+      text-align: center;
+    }
+    footer p {
+      font-size: 0.8rem;
+      color: #999;
+    }
+    footer a {
+      color: #888;
+      text-decoration: none;
+    }
+    footer a:hover { color: #555; }
+    .footer-links {
+      display: flex;
+      gap: 1.25rem;
+      justify-content: center;
+      margin-bottom: 0.75rem;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="container">
+      <a href="./" class="nav-brand">
+        <div class="nav-logo"></div>
+        <span class="nav-name">Sunshine</span>
+      </a>
+      <div class="nav-links">
+        <a href="https://github.com/ppoloczek/sunshine">GitHub</a>
+        <a href="./privacy">Privacy</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="content">
+    <div class="container">
+      <h1>Privacy Policy</h1>
+      <p class="updated">Last updated: March 23, 2026</p>
+
+      <h2>Overview</h2>
+      <p>Sunshine is a browser extension that overlays decorative shadow effects on websites. It is designed with privacy as a core principle.</p>
+
+      <h2>Data Collection</h2>
+      <p>Sunshine does <strong>not</strong> collect, transmit, or share any data. Specifically:</p>
+      <ul>
+        <li>No personal information is collected.</li>
+        <li>No browsing history or activity is tracked.</li>
+        <li>No analytics or telemetry data is gathered.</li>
+        <li>No data is sent to any server or third party.</li>
+      </ul>
+
+      <h2>Local Storage</h2>
+      <p>Sunshine stores your preferences (which shadow style and opacity you've chosen for each website) locally on your device using the browser's built-in <code>storage.local</code> API. This data:</p>
+      <ul>
+        <li>Never leaves your device.</li>
+        <li>Is only accessible to the Sunshine extension.</li>
+        <li>Is automatically removed if you uninstall the extension.</li>
+      </ul>
+
+      <h2>Permissions</h2>
+      <p>Sunshine requests the following permissions:</p>
+      <ul>
+        <li><strong>Access to all websites</strong> — required so the shadow overlay can appear on any page you visit. No page content is read or modified beyond adding the visual overlay.</li>
+        <li><strong>Storage</strong> — used to save your per-site preferences locally.</li>
+        <li><strong>Active Tab</strong> — used to communicate between the popup and the current page when you interact with Sunshine's controls.</li>
+      </ul>
+
+      <h2>Third-Party Services</h2>
+      <p>Sunshine does not integrate with or send data to any third-party services.</p>
+
+      <h2>Changes to This Policy</h2>
+      <p>If this policy changes, the updated version will be published at this URL. Since Sunshine collects no data, significant changes are unlikely.</p>
+
+      <h2>Contact</h2>
+      <p>For questions about this privacy policy, please open an issue on the <a href="https://github.com/ppoloczek/sunshine">Sunshine GitHub repository</a>.</p>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="footer-links">
+        <a href="https://github.com/ppoloczek/sunshine">GitHub</a>
+        <a href="./privacy">Privacy Policy</a>
+      </div>
+      <p>Sunshine is open source.</p>
+    </div>
+  </footer>
+</body>
+</html>
