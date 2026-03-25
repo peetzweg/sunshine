@@ -166,10 +166,138 @@
       margin-bottom: 0.75rem;
     }
 
+    /* Demo overlay */
+    #sunshine-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 999;
+      pointer-events: none;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      transition: opacity 0.3s ease;
+    }
+
+    /* Demo control panel */
+    .demo-panel {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      z-index: 1000;
+      background: #fffbf5;
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 12px;
+      padding: 0.875rem 1rem;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      font-family: inherit;
+      min-width: 220px;
+    }
+    .demo-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.625rem;
+    }
+    .demo-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #999;
+    }
+    .demo-toggle {
+      position: relative;
+      width: 36px;
+      height: 20px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      background: #d4d4d4;
+      transition: background 0.2s;
+      padding: 0;
+    }
+    .demo-toggle.active { background: #fbbf24; }
+    .demo-toggle::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #fff;
+      transition: transform 0.2s;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+    }
+    .demo-toggle.active::after { transform: translateX(16px); }
+    .demo-presets {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+      margin-bottom: 0.5rem;
+    }
+    .demo-preset {
+      padding: 0.3rem 0;
+      font-size: 0.7rem;
+      border-radius: 6px;
+      border: 1px solid #e5e5e5;
+      background: #fff;
+      color: #777;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+    .demo-preset:hover { border-color: #ccc; background: #fafafa; }
+    .demo-preset.active {
+      border-color: #fbbf24;
+      background: #fffbeb;
+      color: #b45309;
+      font-weight: 600;
+    }
+    .demo-slider-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .demo-slider-row label {
+      font-size: 0.7rem;
+      color: #999;
+      font-weight: 500;
+      min-width: 2.5rem;
+    }
+    .demo-slider-row input[type="range"] {
+      flex: 1;
+      height: 4px;
+      border-radius: 2px;
+      appearance: none;
+      background: #e5e5e5;
+      cursor: pointer;
+      accent-color: #fbbf24;
+    }
+    .demo-slider-row span {
+      font-size: 0.7rem;
+      color: #999;
+      min-width: 2rem;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
     @media (max-width: 480px) {
       .features-grid { grid-template-columns: 1fr; }
       h1 { font-size: 1.6rem; }
       .hero { padding: 3rem 0 2.5rem; }
+      .demo-panel {
+        bottom: 0;
+        right: 0;
+        left: 0;
+        border-radius: 12px 12px 0 0;
+        min-width: unset;
+      }
     }
   </style>
 </head>
@@ -248,5 +376,69 @@
       <p>Sunshine is open source.</p>
     </div>
   </footer>
+
+  <!-- Live demo overlay -->
+  <div id="sunshine-overlay"></div>
+
+  <!-- Demo control panel -->
+  <div class="demo-panel">
+    <div class="demo-header">
+      <span class="demo-label">Live demo</span>
+      <button class="demo-toggle active" id="demo-toggle" aria-label="Toggle overlay"></button>
+    </div>
+    <div id="demo-controls">
+      <div class="demo-presets" id="demo-presets">
+        <button class="demo-preset" data-shadow="005">Whisper</button>
+        <button class="demo-preset" data-shadow="007">Gentle</button>
+        <button class="demo-preset active" data-shadow="041">Dappled</button>
+        <button class="demo-preset" data-shadow="063">Deep</button>
+      </div>
+      <div class="demo-slider-row">
+        <label>Opacity</label>
+        <input type="range" id="demo-opacity" min="5" max="80" step="5" value="20">
+        <span id="demo-opacity-val">20%</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      var overlay = document.getElementById('sunshine-overlay');
+      var toggle = document.getElementById('demo-toggle');
+      var controls = document.getElementById('demo-controls');
+      var presets = document.getElementById('demo-presets');
+      var slider = document.getElementById('demo-opacity');
+      var valLabel = document.getElementById('demo-opacity-val');
+      var active = true;
+      var currentShadow = '041';
+      var currentOpacity = 0.2;
+
+      overlay.style.backgroundImage = 'url(./shadows/' + currentShadow + '.png)';
+      overlay.style.opacity = currentOpacity;
+
+      toggle.addEventListener('click', function() {
+        active = !active;
+        toggle.classList.toggle('active', active);
+        overlay.style.opacity = active ? currentOpacity : 0;
+        controls.style.display = active ? '' : 'none';
+      });
+
+      presets.addEventListener('click', function(e) {
+        var btn = e.target.closest('.demo-preset');
+        if (!btn) return;
+        currentShadow = btn.dataset.shadow;
+        overlay.style.backgroundImage = 'url(./shadows/' + currentShadow + '.png)';
+        presets.querySelectorAll('.demo-preset').forEach(function(b) {
+          b.classList.toggle('active', b === btn);
+        });
+      });
+
+      slider.addEventListener('input', function() {
+        currentOpacity = this.value / 100;
+        overlay.style.opacity = currentOpacity;
+        valLabel.textContent = this.value + '%';
+      });
+    })();
+  </script>
 </body>
 </html>
