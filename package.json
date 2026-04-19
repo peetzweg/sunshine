@@ -11,6 +11,8 @@
     "build:firefox": "wxt build --browser firefox",
     "zip": "wxt zip",
     "zip:firefox": "wxt zip --browser firefox",
+    "changeset": "changeset",
+    "version": "changeset version",
     "postinstall": "wxt prepare"
   },
   "dependencies": {
@@ -18,6 +20,8 @@
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
+    "@changesets/changelog-github": "^0.6.0",
+    "@changesets/cli": "^2.31.0",
     "@tailwindcss/vite": "^4.1.17",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
