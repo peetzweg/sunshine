@@ -54,9 +54,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PUBLISHED_PACKAGES: ${{ steps.changesets.outputs.publishedPackages }}
         run: |
-          TAG=$(echo "$PUBLISHED_PACKAGES" | jq -r '.[0] | "\(.name)@\(.version)"')
           VERSION=$(echo "$PUBLISHED_PACKAGES" | jq -r '.[0].version')
-          gh release upload "$TAG" \
+          gh release upload "v${VERSION}" \
             ".output/sunshine-extension-${VERSION}-chrome.zip" \
             ".output/sunshine-extension-${VERSION}-firefox.zip" \
             ".output/sunshine-extension-${VERSION}-sources.zip" \
