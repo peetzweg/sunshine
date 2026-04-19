@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sunshine — Beautiful shadow overlays for any website</title>
   <meta name="description" content="A browser extension that overlays beautiful shadow effects on any website. Choose from handcrafted presets, adjust opacity, and save preferences per site.">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#9728;&#65039;</text></svg>">
+  <link rel="icon" type="image/svg+xml" href="./sunshine.svg">
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -42,8 +42,7 @@
     .nav-logo {
       width: 28px;
       height: 28px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #fcd34d, #ea580c);
+      display: block;
     }
     .nav-name {
       font-size: 0.95rem;
@@ -66,10 +65,9 @@
     .hero-icon {
       width: 64px;
       height: 64px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #fcd34d, #ea580c);
       margin: 0 auto 1.5rem;
-      box-shadow: 0 4px 24px rgba(251, 146, 60, 0.3);
+      display: block;
+      filter: drop-shadow(0 4px 24px rgba(254, 209, 47, 0.4));
     }
     h1 {
       font-size: 2rem;
@@ -220,7 +218,7 @@
       transition: background 0.2s;
       padding: 0;
     }
-    .demo-toggle.active { background: #fbbf24; }
+    .demo-toggle.active { background: #FED12F; }
     .demo-toggle::after {
       content: '';
       position: absolute;
@@ -254,9 +252,9 @@
     }
     .demo-preset:hover { border-color: #ccc; background: #fafafa; }
     .demo-preset.active {
-      border-color: #fbbf24;
-      background: #fffbeb;
-      color: #b45309;
+      border-color: #FED12F;
+      background: #FFF8D9;
+      color: #8B6F00;
       font-weight: 600;
     }
     .demo-slider-row {
@@ -277,7 +275,7 @@
       appearance: none;
       background: #e5e5e5;
       cursor: pointer;
-      accent-color: #fbbf24;
+      accent-color: #FED12F;
     }
     .demo-slider-row span {
       font-size: 0.7rem;
@@ -305,7 +303,7 @@
   <nav>
     <div class="container">
       <a href="./" class="nav-brand">
-        <div class="nav-logo"></div>
+        <img src="./sunshine.svg" alt="" class="nav-logo">
         <span class="nav-name">Sunshine</span>
       </a>
       <div class="nav-links">
@@ -318,7 +316,7 @@
   <main>
     <section class="hero">
       <div class="container">
-        <div class="hero-icon"></div>
+        <img src="./sunshine.svg" alt="Sunshine" class="hero-icon">
         <h1>Beautiful shadow overlays<br>for any website</h1>
         <p>Add natural shadow effects to any page you visit. Dappled sunlight, gentle window shadows, soft ambient light — pick a style and adjust to taste.</p>
 
