@@ -28,27 +28,35 @@ export default defineContentScript({
     let domainSettings: DomainSettings = { ...DEFAULT_DOMAIN_SETTINGS };
     let isInitialLoad = true;
 
+    const TRANSITION_MS = 500;
+    const TRANSITION_CSS = `opacity ${TRANSITION_MS}ms ease-in-out`;
+
+    function styleOverlay(el: HTMLDivElement) {
+      Object.assign(el.style, {
+        position: "fixed",
+        top: "0",
+        left: "0",
+        width: "100vw",
+        height: "100vh",
+        zIndex: "2147483647",
+        pointerEvents: "none",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        backgroundAttachment: "fixed",
+      });
+    }
+
     // Create overlay IMMEDIATELY at document_start — before first paint
     const container = document.createElement("div");
     container.id = "sunshine-overlay";
-    Object.assign(container.style, {
-      position: "fixed",
-      top: "0",
-      left: "0",
-      width: "100vw",
-      height: "100vh",
-      zIndex: "2147483647",
-      pointerEvents: "none",
-      backgroundSize: "cover",
-      backgroundPosition: "center",
-      backgroundRepeat: "no-repeat",
-      backgroundAttachment: "fixed",
-    });
+    styleOverlay(container);
 
     // Apply defaults synchronously — browser.runtime.getURL() is sync
     const defaultImgUrl = browser.runtime.getURL(`/shadows/${DEFAULT_SETTINGS.shadow}.png`);
     container.style.backgroundImage = `url('${defaultImgUrl}')`;
     container.style.opacity = String(DEFAULT_SETTINGS.opacity);
+    container.dataset.shadow = DEFAULT_SETTINGS.shadow;
     document.documentElement.appendChild(container);
 
     // Track whether container is still in the DOM
@@ -81,6 +89,7 @@ export default defineContentScript({
         const imgUrl = browser.runtime.getURL(`/shadows/${currentSettings.shadow}.png`);
         container.style.backgroundImage = `url('${imgUrl}')`;
         container.style.opacity = String(currentSettings.opacity);
+        container.dataset.shadow = currentSettings.shadow;
       } else {
         // Not active — remove before first paint (user never sees it)
         container.remove();
@@ -97,44 +106,63 @@ export default defineContentScript({
     function applyOverlay(active: boolean) {
       if (!active) {
         if (containerRef) {
-          containerRef.style.transition = "opacity 0.5s ease-in-out";
-          containerRef.style.opacity = "0";
           const el = containerRef;
-          setTimeout(() => {
-            el.remove();
-            if (containerRef === el) containerRef = null;
-          }, 500);
+          containerRef = null;
+          el.style.transition = TRANSITION_CSS;
+          el.style.opacity = "0";
+          setTimeout(() => el.remove(), TRANSITION_MS);
         }
         return;
       }
 
-      // Ensure container exists (may have been removed on inactive load)
+      const imgUrl = browser.runtime.getURL(`/shadows/${currentSettings.shadow}.png`);
+      const nextBg = `url('${imgUrl}')`;
+      const nextOpacity = String(currentSettings.opacity);
+
+      // No current overlay — fade a fresh one in
       if (!containerRef) {
-        const newContainer = document.createElement("div");
-        newContainer.id = "sunshine-overlay";
-        Object.assign(newContainer.style, {
-          position: "fixed",
-          top: "0",
-          left: "0",
-          width: "100vw",
-          height: "100vh",
-          zIndex: "2147483647",
-          pointerEvents: "none",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-          backgroundAttachment: "fixed",
-          opacity: "0",
-        });
-        document.documentElement.appendChild(newContainer);
-        containerRef = newContainer;
+        const el = document.createElement("div");
+        el.id = "sunshine-overlay";
+        styleOverlay(el);
+        el.style.backgroundImage = nextBg;
+        el.style.opacity = "0";
+        el.style.transition = TRANSITION_CSS;
+        document.documentElement.appendChild(el);
+        containerRef = el;
+        void el.offsetHeight;
+        el.style.opacity = nextOpacity;
+        return;
       }
 
-      const imgUrl = browser.runtime.getURL(`/shadows/${currentSettings.shadow}.png`);
-      containerRef.style.backgroundImage = `url('${imgUrl}')`;
-      containerRef.style.transition = "opacity 0.5s ease-in-out";
-      void containerRef.offsetHeight;
-      containerRef.style.opacity = String(currentSettings.opacity);
+      const sameShadow = containerRef.dataset.shadow === currentSettings.shadow;
+      if (sameShadow) {
+        // Only opacity changed — transition in place
+        containerRef.style.transition = TRANSITION_CSS;
+        containerRef.style.opacity = nextOpacity;
+        containerRef.dataset.shadow = currentSettings.shadow;
+        return;
+      }
+
+      // Shadow image changed — cross-fade a new layer in, drop the old one
+      const oldEl = containerRef;
+      const newEl = document.createElement("div");
+      newEl.id = "sunshine-overlay";
+      styleOverlay(newEl);
+      newEl.style.backgroundImage = nextBg;
+      newEl.style.opacity = "0";
+      newEl.style.transition = TRANSITION_CSS;
+      newEl.dataset.shadow = currentSettings.shadow;
+
+      // Strip ID from the outgoing layer so IDs stay unique during the fade
+      oldEl.removeAttribute("id");
+      document.documentElement.appendChild(newEl);
+      containerRef = newEl;
+
+      void newEl.offsetHeight;
+      newEl.style.opacity = nextOpacity;
+      oldEl.style.transition = TRANSITION_CSS;
+      oldEl.style.opacity = "0";
+      setTimeout(() => oldEl.remove(), TRANSITION_MS);
     }
 
     function resolveAndApply() {

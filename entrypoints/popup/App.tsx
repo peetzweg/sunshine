@@ -25,8 +25,8 @@ function Toggle({
       role="switch"
       aria-checked={checked}
       onClick={onChange}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 ${
-        checked ? "bg-amber-400" : "bg-gray-200"
+      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FED12F] focus-visible:ring-offset-2 ${
+        checked ? "bg-[#FED12F]" : "bg-gray-200"
       }`}
     >
       <span
@@ -115,7 +115,7 @@ export default function App() {
   if (loading) {
     return (
       <div className="w-80 p-8 flex items-center justify-center">
-        <div className="w-5 h-5 border-2 border-amber-300 border-t-transparent rounded-full animate-spin" />
+        <div className="w-5 h-5 border-2 border-[#FED12F] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -133,11 +133,11 @@ export default function App() {
   const overlayActive = globalActive || domainActive;
 
   return (
-    <div className="w-80 bg-gradient-to-b from-amber-50 to-white">
+    <div className="w-80 bg-gradient-to-b from-[#FFF8D9] to-white">
       {/* Header */}
       <div className="px-5 pt-5 pb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-amber-300 to-orange-400 shadow-sm" />
+          <img src="/sunshine.svg" alt="" className="w-6 h-6" />
           <h1 className="text-base font-semibold text-gray-800 tracking-tight">
             Sunshine
           </h1>
@@ -184,7 +184,7 @@ export default function App() {
                     onClick={() => updateSettings({ shadow: s.id })}
                     className={`px-2 py-1.5 text-xs rounded-lg border transition-all duration-150 ${
                       settings.shadow === s.id
-                        ? "border-amber-400 bg-amber-50 text-amber-700 font-medium shadow-sm"
+                        ? "border-[#FED12F] bg-[#FFF8D9] text-[#8B6F00] font-medium shadow-sm"
                         : "border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:bg-gray-50"
                     }`}
                   >
@@ -213,7 +213,7 @@ export default function App() {
                 onChange={(e) =>
                   updateSettings({ opacity: parseFloat(e.target.value) })
                 }
-                className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-gray-200 accent-amber-400"
+                className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-gray-200 accent-[#FED12F]"
               />
             </div>
           </div>

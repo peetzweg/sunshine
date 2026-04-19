@@ -3,7 +3,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-SVG="$SCRIPT_DIR/icon.svg"
+SVG="$SCRIPT_DIR/../sunshine.svg"
 OUT_DIR="$SCRIPT_DIR/../public/icons"
 
 mkdir -p "$OUT_DIR"

@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./sunshine.svg" alt="Sunshine" width="96" height="96">
+</p>
+
 # Sunshine
 
 A browser extension that overlays beautiful shadow effects on any website. Built with [WXT](https://wxt.dev/), React, and Tailwind CSS.
