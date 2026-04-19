@@ -6,6 +6,11 @@
 
 A browser extension that overlays beautiful shadow effects on any website. Built with [WXT](https://wxt.dev/), React, and Tailwind CSS.
 
+<p align="center">
+  <img src="./demo.png" alt="Sunshine" width="100%" >
+</p>
+
+
 ## Features
 
 - **Global toggle** — enable the shadow overlay on all websites at once
