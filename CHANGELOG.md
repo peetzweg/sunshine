@@ -1,5 +1,11 @@
 # sunshine-extension
 
+## 0.2.2
+
+### Patch Changes
+
+- [`8443463`](https://github.com/peetzweg/sunshine/commit/844346308ce999226a4dcda67b6fc6c37bd73d24) Thanks [@peetzweg](https://github.com/peetzweg)! - Add `data_collection_permissions` to Firefox manifest (AMO compliance — Sunshine collects no user data, so `required` is `none`)
+
 ## 0.2.1
 
 ### Patch Changes
