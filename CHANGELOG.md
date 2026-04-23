@@ -1,5 +1,11 @@
 # sunshine-extension
 
+## 0.2.1
+
+### Patch Changes
+
+- [`bce01a6`](https://github.com/peetzweg/sunshine/commit/bce01a66e4c10e4cf3c626683e2e2596a0f13e11) Thanks [@peetzweg](https://github.com/peetzweg)! - Add MIT license
+
 ## 0.2.0
 
 ### Minor Changes
