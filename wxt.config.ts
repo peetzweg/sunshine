@@ -24,6 +24,9 @@ export default defineConfig({
       gecko: {
         id: "{d4f7e8a1-9c3b-4f2d-b6a8-1e5f7c9d2b4a}",
         strict_min_version: "109.0",
+        data_collection_permissions: {
+          required: ["none"],
+        },
       },
     },
     web_accessible_resources: [
