@@ -13,11 +13,10 @@ A browser extension that overlays beautiful shadow effects on any website. Built
 
 ## Features
 
-- **Global toggle** — enable the shadow overlay on all websites at once
-- **Per-domain toggle** — enable it only on specific domains
+- **Global defaults** — pick a shadow and opacity once and they apply to every site you visit
+- **Per-site overrides** — customize or disable the overlay on a single site without touching your global defaults; `www.example.com` and `example.com` share one override, but real subdomains (like `app.example.com`) are independent so apps on subdomains aren't affected
 - **Shadow presets** — choose from four shadow styles: Whisper, Gentle, Dappled, and Deep
 - **Opacity control** — adjust overlay intensity from 5% to 80%
-- **Per-site settings** — shadow style and opacity are saved per hostname
 - **Zero flicker** — content script injects at `document_start` so the overlay appears before the first paint
 
 ## Getting started

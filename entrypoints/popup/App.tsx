@@ -1,15 +1,13 @@
 import { useEffect, useState } from "react";
 import {
   SHADOWS,
-  DEFAULT_SETTINGS,
   DEFAULT_GLOBAL_SETTINGS,
-  DEFAULT_DOMAIN_SETTINGS,
   GLOBAL_STORAGE_KEY,
-  storageKey,
-  domainStorageKey,
-  type SiteSettings,
+  normalizeHostname,
+  seedOverrideFromGlobal,
+  siteStorageKey,
   type GlobalSettings,
-  type DomainSettings,
+  type SiteOverride,
 } from "../../lib/constants";
 
 function Toggle({
@@ -38,12 +36,71 @@ function Toggle({
   );
 }
 
+function ShadowGrid({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (shadow: string) => void;
+}) {
+  return (
+    <div>
+      <label className="text-xs font-medium text-gray-500 mb-1.5 block">
+        Shadow
+      </label>
+      <div className="grid grid-cols-4 gap-1.5">
+        {SHADOWS.map((s) => (
+          <button
+            key={s.id}
+            type="button"
+            onClick={() => onChange(s.id)}
+            className={`px-2 py-1.5 text-xs rounded-lg border transition-all duration-150 ${
+              value === s.id
+                ? "border-[#FED12F] bg-[#FFF8D9] text-[#8B6F00] font-medium shadow-sm"
+                : "border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:bg-gray-50"
+            }`}
+          >
+            {s.name}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function OpacitySlider({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (opacity: number) => void;
+}) {
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-1.5">
+        <label className="text-xs font-medium text-gray-500">Opacity</label>
+        <span className="text-xs tabular-nums text-gray-400">
+          {Math.round(value * 100)}%
+        </span>
+      </div>
+      <input
+        type="range"
+        min="0.05"
+        max="0.8"
+        step="0.05"
+        value={value}
+        onChange={(e) => onChange(parseFloat(e.target.value))}
+        className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-gray-200 accent-[#FED12F]"
+      />
+    </div>
+  );
+}
+
 export default function App() {
   const [hostname, setHostname] = useState<string>("");
-  const [domain, setDomain] = useState<string>("");
-  const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SETTINGS);
-  const [globalActive, setGlobalActive] = useState(false);
-  const [domainActive, setDomainActive] = useState(false);
+  const [normalizedHostname, setNormalizedHostname] = useState<string>("");
+  const [global, setGlobal] = useState<GlobalSettings>(DEFAULT_GLOBAL_SETTINGS);
+  const [override, setOverride] = useState<SiteOverride | null>(null);
   const [loading, setLoading] = useState(true);
   const [unavailable, setUnavailable] = useState(false);
 
@@ -60,26 +117,33 @@ export default function App() {
           return;
         }
 
-        // Ask the content script for the hostname
         const response = await browser.tabs.sendMessage(tab.id, {
           type: "sunshine:getInfo",
         });
 
-        if (response?.hostname) {
-          setHostname(response.hostname);
-          setDomain(response.domain ?? response.hostname);
-          if (response.settings) {
-            setSettings(response.settings);
-          }
-          if (response.globalSettings) {
-            setGlobalActive(response.globalSettings.active);
-          }
-          if (response.domainSettings) {
-            setDomainActive(response.domainSettings.active);
-          }
-        } else {
+        if (!response?.hostname) {
           setUnavailable(true);
+          setLoading(false);
+          return;
         }
+
+        const normalized: string =
+          response.normalizedHostname ?? normalizeHostname(response.hostname);
+        setHostname(response.hostname);
+        setNormalizedHostname(normalized);
+
+        const stored = await browser.storage.local.get([
+          GLOBAL_STORAGE_KEY,
+          siteStorageKey(normalized),
+        ]);
+        setGlobal(
+          (stored[GLOBAL_STORAGE_KEY] as GlobalSettings | undefined) ??
+            DEFAULT_GLOBAL_SETTINGS,
+        );
+        setOverride(
+          (stored[siteStorageKey(normalized)] as SiteOverride | undefined) ??
+            null,
+        );
       } catch {
         // Content script not available on this page
         setUnavailable(true);
@@ -89,27 +153,34 @@ export default function App() {
     init();
   }, []);
 
-  async function updateGlobal(active: boolean) {
-    setGlobalActive(active);
-    const value: GlobalSettings = { active };
-    await browser.storage.local.set({ [GLOBAL_STORAGE_KEY]: value });
+  async function updateGlobal(partial: Partial<GlobalSettings>) {
+    const next: GlobalSettings = { ...global, ...partial };
+    setGlobal(next);
+    await browser.storage.local.set({ [GLOBAL_STORAGE_KEY]: next });
   }
 
-  async function updateDomain(active: boolean) {
-    if (!domain) return;
-    setDomainActive(active);
-    const value: DomainSettings = { active };
-    await browser.storage.local.set({ [domainStorageKey(domain)]: value });
+  async function enableOverride() {
+    if (!normalizedHostname) return;
+    const next = seedOverrideFromGlobal(global);
+    setOverride(next);
+    await browser.storage.local.set({
+      [siteStorageKey(normalizedHostname)]: next,
+    });
   }
 
-  async function updateSettings(partial: Partial<SiteSettings>) {
-    const newSettings = { ...settings, ...partial };
-    setSettings(newSettings);
-    if (hostname) {
-      await browser.storage.local.set({
-        [storageKey(hostname)]: newSettings,
-      });
-    }
+  async function disableOverride() {
+    if (!normalizedHostname) return;
+    setOverride(null);
+    await browser.storage.local.remove(siteStorageKey(normalizedHostname));
+  }
+
+  async function updateOverride(partial: Partial<SiteOverride>) {
+    if (!override || !normalizedHostname) return;
+    const next: SiteOverride = { ...override, ...partial };
+    setOverride(next);
+    await browser.storage.local.set({
+      [siteStorageKey(normalizedHostname)]: next,
+    });
   }
 
   if (loading) {
@@ -123,14 +194,12 @@ export default function App() {
   if (unavailable) {
     return (
       <div className="w-80 p-6 text-center">
-        <p className="text-sm text-gray-400">
-          Cannot overlay this page.
-        </p>
+        <p className="text-sm text-gray-400">Cannot overlay this page.</p>
       </div>
     );
   }
 
-  const overlayActive = globalActive || domainActive;
+  const overrideActive = override !== null;
 
   return (
     <div className="w-80 bg-gradient-to-b from-[#FFF8D9] to-white">
@@ -147,77 +216,78 @@ export default function App() {
         </span>
       </div>
 
-      <div className="px-5 pb-5 space-y-4">
-        {/* Global toggle */}
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-600">Enabled everywhere</span>
-          <Toggle
-            checked={globalActive}
-            onChange={() => updateGlobal(!globalActive)}
-          />
-        </div>
+      <div className="px-5 pb-5 space-y-5">
+        {/* Global defaults */}
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-gray-700">
+              Enabled everywhere
+            </span>
+            <Toggle
+              checked={global.active}
+              onChange={() => updateGlobal({ active: !global.active })}
+            />
+          </div>
 
-        {/* Domain toggle */}
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-600">
-            Enabled on {domain}
-          </span>
-          <Toggle
-            checked={domainActive}
-            onChange={() => updateDomain(!domainActive)}
-          />
-        </div>
-
-        {/* Controls (shown when overlay is active) */}
-        {overlayActive && (
-          <div className="space-y-3 animate-in fade-in duration-200">
-            {/* Shadow selector */}
-            <div>
-              <label className="text-xs font-medium text-gray-500 mb-1.5 block">
-                Shadow
-              </label>
-              <div className="grid grid-cols-4 gap-1.5">
-                {SHADOWS.map((s) => (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => updateSettings({ shadow: s.id })}
-                    className={`px-2 py-1.5 text-xs rounded-lg border transition-all duration-150 ${
-                      settings.shadow === s.id
-                        ? "border-[#FED12F] bg-[#FFF8D9] text-[#8B6F00] font-medium shadow-sm"
-                        : "border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:bg-gray-50"
-                    }`}
-                  >
-                    {s.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Opacity slider */}
-            <div>
-              <div className="flex justify-between items-center mb-1.5">
-                <label className="text-xs font-medium text-gray-500">
-                  Opacity
-                </label>
-                <span className="text-xs tabular-nums text-gray-400">
-                  {Math.round(settings.opacity * 100)}%
-                </span>
-              </div>
-              <input
-                type="range"
-                min="0.05"
-                max="0.8"
-                step="0.05"
-                value={settings.opacity}
-                onChange={(e) =>
-                  updateSettings({ opacity: parseFloat(e.target.value) })
-                }
-                className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-gray-200 accent-[#FED12F]"
+          {global.active && (
+            <div className="space-y-3 animate-in fade-in duration-200">
+              <ShadowGrid
+                value={global.shadow}
+                onChange={(shadow) => updateGlobal({ shadow })}
+              />
+              <OpacitySlider
+                value={global.opacity}
+                onChange={(opacity) => updateGlobal({ opacity })}
               />
             </div>
+          )}
+        </section>
+
+        <div className="border-t border-gray-200" />
+
+        {/* Per-site override */}
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-gray-700 truncate pr-2">
+              Customize for{" "}
+              <span className="font-mono text-gray-600">
+                {normalizedHostname}
+              </span>
+            </span>
+            <Toggle
+              checked={overrideActive}
+              onChange={() =>
+                overrideActive ? disableOverride() : enableOverride()
+              }
+            />
           </div>
-        )}
+
+          {override && (
+            <div className="space-y-3 animate-in fade-in duration-200">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Enabled here</span>
+                <Toggle
+                  checked={override.active}
+                  onChange={() =>
+                    updateOverride({ active: !override.active })
+                  }
+                />
+              </div>
+              {override.active && (
+                <>
+                  <ShadowGrid
+                    value={override.shadow}
+                    onChange={(shadow) => updateOverride({ shadow })}
+                  />
+                  <OpacitySlider
+                    value={override.opacity}
+                    onChange={(opacity) => updateOverride({ opacity })}
+                  />
+                </>
+              )}
+            </div>
+          )}
+        </section>
       </div>
     </div>
   );
