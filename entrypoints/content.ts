@@ -1,14 +1,11 @@
 import {
-  DEFAULT_SETTINGS,
   DEFAULT_GLOBAL_SETTINGS,
-  DEFAULT_DOMAIN_SETTINGS,
   GLOBAL_STORAGE_KEY,
-  storageKey,
-  extractDomain,
-  domainStorageKey,
-  type SiteSettings,
+  normalizeHostname,
+  resolveOverlayConfig,
+  siteStorageKey,
   type GlobalSettings,
-  type DomainSettings,
+  type SiteOverride,
 } from "../lib/constants";
 
 export default defineContentScript({
@@ -19,17 +16,18 @@ export default defineContentScript({
     const hostname = window.location.hostname;
     if (!hostname) return;
 
-    const key = storageKey(hostname);
-    const domain = extractDomain(hostname);
-    const domainKey = domainStorageKey(domain);
+    const normalizedHostname = normalizeHostname(hostname);
+    const siteKey = siteStorageKey(normalizedHostname);
 
-    let currentSettings: SiteSettings = { ...DEFAULT_SETTINGS };
-    let globalSettings: GlobalSettings = { ...DEFAULT_GLOBAL_SETTINGS };
-    let domainSettings: DomainSettings = { ...DEFAULT_DOMAIN_SETTINGS };
-    let isInitialLoad = true;
+    let global: GlobalSettings = { ...DEFAULT_GLOBAL_SETTINGS };
+    let override: SiteOverride | undefined;
 
     const TRANSITION_MS = 500;
     const TRANSITION_CSS = `opacity ${TRANSITION_MS}ms ease-in-out`;
+
+    function resolved(): GlobalSettings | SiteOverride {
+      return resolveOverlayConfig(global, override);
+    }
 
     function styleOverlay(el: HTMLDivElement) {
       Object.assign(el.style, {
@@ -47,19 +45,23 @@ export default defineContentScript({
       });
     }
 
-    // Create overlay IMMEDIATELY at document_start — before first paint
+    // Create overlay IMMEDIATELY at document_start — before first paint.
+    // Start at opacity 0 so we never flash a wrong shadow; fade in only once
+    // storage resolves with the real resolved config.
     const container = document.createElement("div");
     container.id = "sunshine-overlay";
     styleOverlay(container);
 
-    // Apply defaults synchronously — browser.runtime.getURL() is sync
-    const defaultImgUrl = browser.runtime.getURL(`/shadows/${DEFAULT_SETTINGS.shadow}.png`);
+    // Preload the default shadow image into the element so cache is warm.
+    // browser.runtime.getURL() is sync.
+    const defaultImgUrl = browser.runtime.getURL(
+      `/shadows/${DEFAULT_GLOBAL_SETTINGS.shadow}.png`,
+    );
     container.style.backgroundImage = `url('${defaultImgUrl}')`;
-    container.style.opacity = String(DEFAULT_SETTINGS.opacity);
-    container.dataset.shadow = DEFAULT_SETTINGS.shadow;
+    container.style.opacity = "0";
+    container.dataset.shadow = DEFAULT_GLOBAL_SETTINGS.shadow;
     document.documentElement.appendChild(container);
 
-    // Track whether container is still in the DOM
     let containerRef: HTMLDivElement | null = container;
 
     // Safety timeout — if storage never resolves, remove overlay
@@ -71,36 +73,37 @@ export default defineContentScript({
     }, 500);
 
     // Fetch actual settings and adjust before first paint
-    browser.storage.local.get([key, GLOBAL_STORAGE_KEY, domainKey]).then((result) => {
-      clearTimeout(safetyTimer);
+    browser.storage.local
+      .get([GLOBAL_STORAGE_KEY, siteKey])
+      .then((result) => {
+        clearTimeout(safetyTimer);
 
-      const savedGlobal = result[GLOBAL_STORAGE_KEY] as GlobalSettings | undefined;
-      if (savedGlobal) globalSettings = savedGlobal;
+        const savedGlobal = result[GLOBAL_STORAGE_KEY] as
+          | GlobalSettings
+          | undefined;
+        if (savedGlobal) global = savedGlobal;
 
-      const savedDomain = result[domainKey] as DomainSettings | undefined;
-      if (savedDomain) domainSettings = savedDomain;
+        override = result[siteKey] as SiteOverride | undefined;
 
-      const savedSite = result[key] as SiteSettings | undefined;
-      if (savedSite) currentSettings = savedSite;
-
-      const isActive = globalSettings.active || domainSettings.active;
-      if (isActive) {
-        // Update to actual settings (may differ from defaults)
-        const imgUrl = browser.runtime.getURL(`/shadows/${currentSettings.shadow}.png`);
-        container.style.backgroundImage = `url('${imgUrl}')`;
-        container.style.opacity = String(currentSettings.opacity);
-        container.dataset.shadow = currentSettings.shadow;
-      } else {
-        // Not active — remove before first paint (user never sees it)
+        const r = resolved();
+        if (r.active) {
+          const imgUrl = browser.runtime.getURL(`/shadows/${r.shadow}.png`);
+          container.style.backgroundImage = `url('${imgUrl}')`;
+          container.style.transition = TRANSITION_CSS;
+          container.dataset.shadow = r.shadow;
+          // Force layout before fading opacity up so the transition runs.
+          void container.offsetHeight;
+          container.style.opacity = String(r.opacity);
+        } else {
+          container.remove();
+          containerRef = null;
+        }
+      })
+      .catch(() => {
+        clearTimeout(safetyTimer);
         container.remove();
         containerRef = null;
-      }
-      isInitialLoad = false;
-    }).catch(() => {
-      clearTimeout(safetyTimer);
-      container.remove();
-      containerRef = null;
-    });
+      });
 
     // Runtime changes from popup (after initial load)
     function applyOverlay(active: boolean) {
@@ -115,9 +118,10 @@ export default defineContentScript({
         return;
       }
 
-      const imgUrl = browser.runtime.getURL(`/shadows/${currentSettings.shadow}.png`);
+      const r = resolved();
+      const imgUrl = browser.runtime.getURL(`/shadows/${r.shadow}.png`);
       const nextBg = `url('${imgUrl}')`;
-      const nextOpacity = String(currentSettings.opacity);
+      const nextOpacity = String(r.opacity);
 
       // No current overlay — fade a fresh one in
       if (!containerRef) {
@@ -127,6 +131,7 @@ export default defineContentScript({
         el.style.backgroundImage = nextBg;
         el.style.opacity = "0";
         el.style.transition = TRANSITION_CSS;
+        el.dataset.shadow = r.shadow;
         document.documentElement.appendChild(el);
         containerRef = el;
         void el.offsetHeight;
@@ -134,12 +139,12 @@ export default defineContentScript({
         return;
       }
 
-      const sameShadow = containerRef.dataset.shadow === currentSettings.shadow;
+      const sameShadow = containerRef.dataset.shadow === r.shadow;
       if (sameShadow) {
         // Only opacity changed — transition in place
         containerRef.style.transition = TRANSITION_CSS;
         containerRef.style.opacity = nextOpacity;
-        containerRef.dataset.shadow = currentSettings.shadow;
+        containerRef.dataset.shadow = r.shadow;
         return;
       }
 
@@ -151,9 +156,8 @@ export default defineContentScript({
       newEl.style.backgroundImage = nextBg;
       newEl.style.opacity = "0";
       newEl.style.transition = TRANSITION_CSS;
-      newEl.dataset.shadow = currentSettings.shadow;
+      newEl.dataset.shadow = r.shadow;
 
-      // Strip ID from the outgoing layer so IDs stay unique during the fade
       oldEl.removeAttribute("id");
       document.documentElement.appendChild(newEl);
       containerRef = newEl;
@@ -166,8 +170,7 @@ export default defineContentScript({
     }
 
     function resolveAndApply() {
-      const isActive = globalSettings.active || domainSettings.active;
-      applyOverlay(isActive);
+      applyOverlay(resolved().active);
     }
 
     // Respond to popup info requests
@@ -175,10 +178,9 @@ export default defineContentScript({
       if (message?.type === "sunshine:getInfo") {
         return Promise.resolve({
           hostname,
-          domain,
-          settings: currentSettings,
-          globalSettings,
-          domainSettings,
+          normalizedHostname,
+          global,
+          override,
         });
       }
     });
@@ -190,17 +192,19 @@ export default defineContentScript({
       let needsResolve = false;
 
       if (changes[GLOBAL_STORAGE_KEY]) {
-        globalSettings = (changes[GLOBAL_STORAGE_KEY].newValue as GlobalSettings) ?? { ...DEFAULT_GLOBAL_SETTINGS };
+        global =
+          (changes[GLOBAL_STORAGE_KEY].newValue as GlobalSettings) ??
+          { ...DEFAULT_GLOBAL_SETTINGS };
         needsResolve = true;
       }
 
-      if (changes[domainKey]) {
-        domainSettings = (changes[domainKey].newValue as DomainSettings) ?? { ...DEFAULT_DOMAIN_SETTINGS };
-        needsResolve = true;
-      }
-
-      if (changes[key]) {
-        currentSettings = (changes[key].newValue as SiteSettings) ?? { ...DEFAULT_SETTINGS };
+      if (changes[siteKey]) {
+        const newValue = changes[siteKey].newValue as
+          | SiteOverride
+          | undefined;
+        // newValue === undefined means the override key was removed
+        // (popup turned "Customize for this site" off) — reset to inherit.
+        override = newValue;
         needsResolve = true;
       }
 
